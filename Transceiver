@@ -1,0 +1,83 @@
+#include "DHT.h"
+#include <Wire.h>
+#include <Adafruit_BMP280.h>
+
+#include <SPI.h>
+#include <nRF24L01.h>
+#include <RF24.h>
+
+RF24 radio(7, 8); // CE, CSN
+#define DHTPIN 2     
+
+#define DHTTYPE DHT11 
+ Adafruit_BMP280 bmp;
+int Swiatlo=0;
+int deszcz=0;
+DHT dht(DHTPIN, DHTTYPE);
+const byte address[6] = "00001";
+
+struct Data_Package {
+  int deszcz;
+  int slonce;
+  float wilgotnosc;
+  float temp;
+  float cisnienie;
+  
+};
+
+void setup() {
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
+   pinMode(6, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(11, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(A3, OUTPUT);
+ digitalWrite(12, HIGH);
+ digitalWrite(4, HIGH);
+ digitalWrite(5, HIGH);
+  digitalWrite(6, LOW);
+ digitalWrite(9, HIGH);
+ digitalWrite(3, LOW);
+ digitalWrite(A3, HIGH);
+  Serial.begin(9600);
+ 
+  unsigned status;
+
+  status = bmp.begin();
+ 
+  dht.begin();
+  radio.begin();
+  radio.openWritingPipe(address);
+  radio.setPALevel(RF24_PA_MIN);
+  radio.stopListening();
+}
+
+void loop() {
+   digitalWrite(A3, HIGH);
+digitalWrite(9, HIGH);
+  digitalWrite(5, HIGH);
+  digitalWrite(12, HIGH);
+  digitalWrite(6, LOW);
+   digitalWrite(4, HIGH);
+    digitalWrite(3, LOW);
+   deszcz=analogRead(A1);
+Swiatlo=analogRead(A0);
+
+
+
+  float h = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  float t = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  float f = dht.readTemperature(true);
+  Data_Package data = {deszcz, Swiatlo,h,bmp.readTemperature(),bmp.readPressure()};
+
+
+radio.write(&data, sizeof(Data_Package));
+  delay(1000);
+}
